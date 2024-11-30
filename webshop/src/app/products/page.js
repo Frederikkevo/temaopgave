@@ -12,31 +12,39 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [showCart, setShowCart] = useState(false);
 
+  // Fetch products and categories
   useEffect(() => {
-    // Fetch products
-    fetch('https://dummyjson.com/products')
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data.products);
-        setFilteredProducts(data.products);
-      });
+    const fetchData = async () => {
+      try {
+        // Fetch products
+        const productsRes = await fetch('https://dummyjson.com/products');
+        const productsData = await productsRes.json();
+        setProducts(productsData.products);
+        setFilteredProducts(productsData.products);
 
-    // Fetch categories
-    fetch('https://dummyjson.com/products/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories([{ name: 'All', slug: 'all' }, ...data.map((cat) => ({ name: cat, slug: cat }))]); // Sikrer unikke værdier
-      });
+        // Fetch categories
+        const categoriesRes = await fetch('https://dummyjson.com/products/categories');
+        const categoriesData = await categoriesRes.json();
+        const processedCategories = ['All', ...categoriesData.map((cat) => String(cat))];
+        setCategories(processedCategories); // Ensure categories are valid strings
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleFilter = (slug) => {
-    if (slug === 'all') {
+  // Filter products by category
+  const handleFilter = (category) => {
+    if (category === 'All') {
       setFilteredProducts(products);
     } else {
-      setFilteredProducts(products.filter((product) => product.category === slug));
+      setFilteredProducts(products.filter((product) => product.category === category));
     }
   };
 
+  // Search products
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
     setSearch(value);
@@ -47,49 +55,57 @@ export default function ProductsPage() {
     );
   };
 
+  // Add to cart
   const addToCart = (product) => {
-    setCart([...cart, product]);
+    setCart((prevCart) => [...prevCart, product]);
   };
 
+  // Remove from cart
   const removeFromCart = (id) => {
-    setCart(cart.filter((item) => item.id !== id));
+    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
   };
 
   return (
     <div className="container mx-auto px-6 py-8">
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Produkter</h1>
+        <h1 className="text-3xl font-bold">Products</h1>
         <div
           className="relative"
           onMouseEnter={() => setShowCart(true)}
           onMouseLeave={() => setShowCart(false)}
         >
           <button className="bg-blue-500 text-white px-4 py-2 rounded">
-            Kurv ({cart.length})
+            Cart ({cart.length})
           </button>
           {showCart && (
-            <div className="absolute right-0 mt-2 bg-white border rounded shadow-lg w-64">
+            <div
+              className="absolute right-0 mt-2 bg-white border rounded shadow-lg w-64"
+              onMouseEnter={() => setShowCart(true)} // Keep the dropdown open
+              onMouseLeave={() => setShowCart(false)} // Close when mouse leaves
+            >
               {cart.length > 0 ? (
                 cart.map((item) => (
-                  <div key={`cart-${item.id}`} className="flex justify-between items-center p-2">
+                  <div key={item.id} className="flex justify-between items-center p-2">
                     <span>{item.title}</span>
                     <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-red-500 hover:underline"
                     >
-                      Fjern
+                      Remove
                     </button>
                   </div>
                 ))
               ) : (
-                <p className="p-2">Kurven er tom</p>
+                <p className="p-2">Cart is empty</p>
               )}
               {cart.length > 0 && (
                 <Link
-                  href={`/payment?items=${encodeURIComponent(JSON.stringify(cart.map((item) => item.id)))}`}
+                  href={`/payment?items=${encodeURIComponent(
+                    JSON.stringify(cart.map((item) => item.id))
+                  )}`}
                   className="block bg-green-500 text-white text-center py-2"
                 >
-                  Betal nu
+                  Proceed to Payment
                 </Link>
               )}
             </div>
@@ -98,10 +114,15 @@ export default function ProductsPage() {
       </header>
 
       <div className="flex gap-4 mb-6">
-        <select onChange={(e) => handleFilter(e.target.value)} className="p-2 border rounded">
-          {categories.map((category) => (
-            <option key={`category-${category.slug}`} value={category.slug}>
-              {category.name}
+        <select
+          onChange={(e) => handleFilter(e.target.value)}
+          className="p-2 border rounded"
+        >
+          {categories.map((category, index) => (
+            <option key={`category-${index}`} value={category}>
+              {typeof category === 'string'
+                ? category.charAt(0).toUpperCase() + category.slice(1)
+                : ''}
             </option>
           ))}
         </select>
@@ -109,7 +130,7 @@ export default function ProductsPage() {
           type="text"
           value={search}
           onChange={handleSearch}
-          placeholder="Søg efter produkter..."
+          placeholder="Search products..."
           className="p-2 border rounded flex-1"
         />
       </div>

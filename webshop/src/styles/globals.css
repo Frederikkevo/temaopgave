@@ -2,18 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-50 text-gray-800 font-sans antialiased;
+/* Betalingsside-specifik styling */
+.payment-container {
+  @apply container mx-auto px-6 py-8;
 }
 
-button {
-  @apply bg-blue-500 text-white px-4 py-2 rounded transition-colors duration-300 hover:bg-blue-700;
+.payment-header {
+  @apply text-3xl font-bold mb-4;
 }
 
-header {
-  @apply bg-white border-b shadow-md p-4 sticky top-0 z-10;
+.payment-card {
+  @apply bg-white shadow-md rounded p-6;
 }
 
-select, input {
-  @apply border rounded px-3 py-2;
+.payment-button {
+  @apply bg-green-500 text-white px-4 py-2 rounded transition-colors duration-300 hover:bg-green-700;
 }
